@@ -112,6 +112,10 @@ The scripts will scrape product details such as:
     energy consumption
     Product URL
 
+The following entity diagram shows the expected output of information scraped from websites:
+
+![description of the databases to create](src\data_bases\model_diagam.drawio.png "Entity Relation Diagram")
+
 The data is then saved into the PostgreSQL database configured in your setup.
 ## Viewing the Dashboard
 
