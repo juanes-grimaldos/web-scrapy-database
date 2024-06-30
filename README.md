@@ -14,4 +14,4 @@ Este proyecto tiene la siguiente estructura:
         ├── 📁web-scrapy
 ```
 
-Donde los scripts se ejecutaran a partir de la carpeta src.
+<iframe title="dashboard" width="600" height="373.5" src="https://app.powerbi.com/view?r=eyJrIjoiNjNhYTBhOTktMDE0YS00Yzg3LTg1ZDctN2JkZjIxNzJiYmE4IiwidCI6ImQ2NDZkM2E4LTdiMTUtNGI1My05ZDkyLTk4MTVmZDYyNzAyYyIsImMiOjR9" frameborder="0" allowFullScreen="true"></iframe>
