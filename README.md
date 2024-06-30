@@ -83,7 +83,7 @@ You can run the scraping scripts using either Chrome or Firefox. Ensure that the
 Example command to run a script:
 
 ```bash
-python scrape_exito.py
+python alkosto_scraper.py
 ```
 
 ### Execution Time
