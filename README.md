@@ -2,16 +2,16 @@
 
 ## Summary
 
-This project automates the process of web scraping product data from major e-commerce platforms Exito, Falabella, Alkosto, and Sodimac using Selenium and stores the scraped data in a PostgreSQL database. The project is developed in Python and aims to streamline data collection for market analysis and research.
+This project automates the process of web scraping product data from major e-commerce platforms [Exito](https://www.exito.com/electrodomesticos/refrigeracion/neveras), [Falabella](https://www.falabella.com.co/falabella-co/category/CATG32130/Refrigeracion?mkid=HB_1_REF_G14_N2_1081&page=1), [Alkosto](https://www.alkosto.com/electrodomesticos/grandes-electrodomesticos/refrigeracion/c/BI_0610_ALKOS), and [Sodimac](https://www.homecenter.com.co/homecenter-co/category/cat10850/neveras-y-nevecones/?currentpage=1) using [Selenium](https://www.selenium.dev/) and stores the scraped data in a [PostgreSQL](https://www.postgresql.org/) database. The data is visualized by [Power Bi](https://www.microsoft.com/en-us/power-platform/products/power-bi). Final Dashboard is available to consult [here](https://app.powerbi.com/view?r=eyJrIjoiNjNhYTBhOTktMDE0YS00Yzg3LTg1ZDctN2JkZjIxNzJiYmE4IiwidCI6ImQ2NDZkM2E4LTdiMTUtNGI1My05ZDkyLTk4MTVmZDYyNzAyYyIsImMiOjR9) or in the .pbix file. The project is developed in [Python](https://www.python.org/) and aims to streamline data collection for market analysis and research.
 
 ## Table of Contents
 
-- [Summary](#summary)
 - [Project Overview](#project-overview)
 - [Setup and Installation](#setup-and-installation)
   - [Prerequisites](#prerequisites)
   - [Virtual Environment](#virtual-environment)
   - [Installing Dependencies](#installing-dependencies)
+  - [Enviromental Variables](#enviromental-variables)
 - [Usage](#usage)
   - [Running the Scripts](#running-the-scripts)
   - [Execution Time](#execution-time)
@@ -35,8 +35,8 @@ The data is collected using Selenium for automation and then processed and store
 
 ### Prerequisites
 
-- Python 3.x
-- PostgreSQL
+- Python 3.11.2
+- PostgreSQL 16.3, compiled by Visual C++ build 1938, 64-bit
 - Google Chrome or Mozilla Firefox
 
 ### Virtual Environment
@@ -62,6 +62,17 @@ Install the required packages using the requirements.txt file:
 ```bash
 pip install -r requirements.txt
 ```
+
+
+### Enviromental Variables
+
+In order to run the codes, several variables need to be set in order to run
+- PYTHONPATH (use src has working directory)
+- POSTGRES_PASSWORD
+- POSTGRES_PORT
+- POSTGRES_DB
+- POSTGRES_SERVER
+- USER_AGENT
 
 ## Usage
 
