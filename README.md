@@ -108,8 +108,8 @@ The scripts will scrape product details such as:
 
     Product name
     Price
-    Availability
-    Ratings (if available)
+    space (liters)
+    energy consumption
     Product URL
 
 The data is then saved into the PostgreSQL database configured in your setup.
