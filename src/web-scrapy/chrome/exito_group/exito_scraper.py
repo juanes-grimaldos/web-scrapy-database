@@ -30,7 +30,6 @@ logging.basicConfig(
 opts = Options()
 opts.add_argument(os.getenv('USER_AGENT'))
 opts.add_argument("--headless")
-opts.add_argument("--no-sandbox")
 opts.add_argument('log-level=3')
 
 driver = webdriver.Chrome(
@@ -114,10 +113,6 @@ for page in pages:
         product_price = driver.find_element(
             By.XPATH, "//p[contains(@class, 'ProductPrice')]"
         ).text
-        product_warranty = driver.find_element(
-            By.XPATH, "//p[@data-fs-product-"
-            "aditional-info-garantia__txt='true']"
-        ).text
         # get list of specs
         list_of_specs = [
             "Ancho", "Alto", "Profundidad", "Peso", "Capacidad", "Consumo", 
@@ -160,7 +155,6 @@ for page in pages:
             "energy": consumo,
             "date": pd.to_datetime("today").date(),
             "size": f"{ancho} x {alto} x {profundidad}",
-            # no color
         }
 
         # store the product info in a json file

@@ -75,7 +75,7 @@ for page in pages:
 
 
     products = nav.find_elements(
-        By.XPATH, "./div[@data-key]//a"
+        By.XPATH, "//div[@data-key]//a[@id='title-pdp-link']"
     )
 
     for product in products:
@@ -94,6 +94,9 @@ for page in pages:
             By.XPATH, "//div[contains(@class, 'regular-price homecenter-co')]"
             "//div[contains(@class, 'primary')]//span[contains(text(),'.')]"
         ).text
+        brand = driver.find_element(
+            By.XPATH, "//button[@id='testId-btn-pdp-description-brand']"
+        ).text
 
         # get the specifications of the product
         width = get_spects('Alto')
@@ -104,7 +107,7 @@ for page in pages:
 
         product_info_db = {
             'link': driver.current_url,
-            'product': title,
+            'product': title + " " + brand,
             'price': int(price.replace('.','')),
             'seller': 'sodimac'
         }
