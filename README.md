@@ -4,6 +4,17 @@
 
 This project automates the process of web scraping fridges data from major e-commerce platforms [Exito](https://www.exito.com/electrodomesticos/refrigeracion/neveras), [Falabella](https://www.falabella.com.co/falabella-co/category/CATG32130/Refrigeracion?mkid=HB_1_REF_G14_N2_1081&page=1), [Alkosto](https://www.alkosto.com/electrodomesticos/grandes-electrodomesticos/refrigeracion/c/BI_0610_ALKOS), and [Sodimac](https://www.homecenter.com.co/homecenter-co/category/cat10850/neveras-y-nevecones/?currentpage=1) using [Selenium](https://www.selenium.dev/) and stores the scraped data in a [PostgreSQL](https://www.postgresql.org/) database. The data is visualized by [Power Bi](https://www.microsoft.com/en-us/power-platform/products/power-bi). Final Dashboard is available to consult [here](https://app.powerbi.com/view?r=eyJrIjoiNjNhYTBhOTktMDE0YS00Yzg3LTg1ZDctN2JkZjIxNzJiYmE4IiwidCI6ImQ2NDZkM2E4LTdiMTUtNGI1My05ZDkyLTk4MTVmZDYyNzAyYyIsImMiOjR9) or in the .pbix file. The project is developed in [Python](https://www.python.org/) and aims to streamline data collection for market analysis and research.
 
+<div class="center-content">
+    <a href="https://www.loom.com/share/86dcee6e874f407a9cec5fb7744b699b">
+        <p>Web Scraping Project by Juanes Grimaldos - Watch Video</p>
+    </a>
+    <a href="https://www.loom.com/share/86dcee6e874f407a9cec5fb7744b699b">
+        <img class="center-img" style="max-width: 300px;" src="https://cdn.loom.com/sessions/thumbnails/86dcee6e874f407a9cec5fb7744b699b-with-play.gif">
+    </a>
+</div>
+
+
+
 ## Table of Contents
 
 - [Project Overview](#project-overview)
