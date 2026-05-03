@@ -1,13 +1,19 @@
-from data_bases.model.declarative_base import Session, engine, Base
-from data_bases.model.data_model import Fridges
-
+from sqlalchemy import create_engine
+import os
+import pandas as pd
 
 if __name__ == '__main__':
-  session = Session()
-  fridges = session.query(Fridges).all()
+  password = os.getenv('POSTGRES_PASSWORD')
+  port = os.getenv('POSTGRES_PORT')
+  db = os.getenv('POSTGRES_DB')
+  base_path = 'postgresql+psycopg2://postgres' # postgres is the default user
+  server = os.getenv('POSTGRES_SERVER')
+  engine = create_engine(f'{base_path}:{password}@localhost:{port}/{db}')
 
-  print('Las neveras almacenadas son:')
-  for fridge in fridges:
-    print(f'{fridge.id} -{fridge.product} - {fridge.date} - {fridge.price} - {fridge.seller}')
+  df = pd.read_sql(
+      "SELECT * FROM public.fridges WHERE seller = 'Alkosto'",
+      engine
+  )
 
-  session.close()
+  print(df.head())
+

@@ -7,7 +7,7 @@ from sqlalchemy import ForeignKey
 class Fridges(Base):
     __tablename__ = 'fridges'
 
-    link = Column(String, primary_key=True)
+    link = Column(String, primary_key=True,  unique=True)
     product = Column(String)
     price = Column(Integer)
     seller = Column(String)
