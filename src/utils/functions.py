@@ -1,6 +1,9 @@
 import json
 import os
 import logging
+from data_bases.model.declarative_base import engine
+import os
+import pandas as pd
 
 class GeneralFunctions:
     '''
@@ -57,3 +60,15 @@ class GeneralFunctions:
             with open(file_name, "w", encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False)
                 logging.info(f"Product info stored in {file_name}")
+    
+    @staticmethod
+    def get_visited_links(store: str) -> list:
+        """Return a list of visited links for the given store."""
+        try:
+            query = "SELECT link FROM public.fridges WHERE seller = %s"
+            df = pd.read_sql(query, engine, params=(store,))
+            return df["link"].tolist()
+        except Exception as e:
+            logging.error(f"Error getting visited links for store '{store}': {e}")
+            pass
+        return [0]
