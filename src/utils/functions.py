@@ -4,6 +4,9 @@ import logging
 from data_bases.model.declarative_base import engine
 import os
 import pandas as pd
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
+
 
 class GeneralFunctions:
     '''
@@ -72,3 +75,67 @@ class GeneralFunctions:
             logging.error(f"Error getting visited links for store '{store}': {e}")
             pass
         return [0]
+
+
+def go_next_page(driver):
+    while True:
+        # 1. Try clicking next directly
+        try:
+            next_page = driver.find_element(
+                By.XPATH,
+                "//button[contains(@aria-label,'Próxima')]"
+            )
+            next_page.click()
+            return True
+        except:
+            pass
+
+        # 2. Try accepting cookies
+        try:
+            cookie_btn = driver.find_element(
+                By.XPATH,
+                "//button[@data-fs-cookies-modal-button='true']"
+            )
+            cookie_btn.click()
+
+            next_page = driver.find_element(
+                By.XPATH,
+                "//button[contains(@aria-label,'Próxima')]"
+            )
+            next_page.click()
+            return True
+        except:
+            pass
+
+        # 3. Try closing popup overlay
+        try:
+            pop_up = driver.find_element(By.XPATH, "//div[@id='wps-overlay']")
+
+            ActionChains(driver)\
+                .move_to_element_with_offset(pop_up, -10, -10)\
+                .click()\
+                .perform()
+
+            next_page = driver.find_element(
+                By.XPATH,
+                "//button[contains(@aria-label,'Próxima')]"
+            )
+            next_page.click()
+            return True
+        except:
+            pass
+
+        # 4. Last attempt: force click via JS
+        try:
+            next_page = driver.find_element(
+                By.XPATH,
+                "//button[contains(@aria-label,'Próxima')]"
+            )
+            driver.execute_script("arguments[0].click();", next_page)
+            return True
+        except:
+            pass
+
+        # 5. Nothing worked → exit
+        print("No more pages or completely blocked")
+        return False

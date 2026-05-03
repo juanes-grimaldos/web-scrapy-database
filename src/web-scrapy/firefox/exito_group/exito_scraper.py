@@ -10,6 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 from utils.functions import GeneralFunctions as gf
+from utils.functions import go_next_page
 import pandas as pd
 import logging
 import os
@@ -22,7 +23,6 @@ dc = DataCreation()
 
 """
 Ejemplo con Neveras
-# TODO: Implementar un sistema de manejo de excepciones para los pop-ups
 # TODO: crear otros scripts con otros productos
 """
 
@@ -33,7 +33,7 @@ logging.basicConfig(
 
 opts = Options()
 opts.add_argument(os.getenv('USER_AGENT'))
-opts.add_argument("--headless")
+#opts.add_argument("--headless")
 
 
 driver = webdriver.Chrome(
@@ -65,6 +65,9 @@ try:
 except Exception as e:
     logging.info("No more pages available")
     pages = range(0)
+
+
+
 
 for page in pages:
     sleep(random.uniform(5, 10))
@@ -102,6 +105,7 @@ for page in pages:
                 "//button")
                 )
             )
+            
             more_view.click()
         except Exception as e:
             logging.info("No 'ver mas' button located or a pop up shows")
@@ -114,7 +118,7 @@ for page in pages:
 
                 more_view.click()
             except Exception as e:
-                logging.info('Pop-ups break the code!')
+                logging.info('Pop-ups break the code! or \'ver mas \' is not available')
 
 
         # get info
@@ -126,14 +130,6 @@ for page in pages:
         product_price = driver.find_element(
             By.XPATH, "//p[contains(@class, 'ProductPrice')]"
         ).text
-        try:
-            product_warranty = driver.find_element(
-                By.XPATH, "//p[@data-fs-product-"
-                "aditional-info-garantia__txt='true']"
-            ).text
-        except Exception as e:
-            logging.info(f'error on getting warranty, maybe it is not available: {e}')
-            product_warranty = 'No warranty'
 
         # get list of specs
         list_of_specs = [
@@ -164,10 +160,13 @@ for page in pages:
         except:
             pass
         sleep(10)
-        driver.find_element(
-            By.XPATH,
-            "//div[contains(@class, 'product-specification')]//div[contains(@class, 'more-link')]"
-        ).click()
+        try:
+            driver.find_element(
+                By.XPATH,
+                "//div[contains(@class, 'product-specification')]//div[contains(@class, 'more-link')]"
+            ).click()
+        except:
+            pass
 
         ancho = get_spec(list_of_specs[0])
         alto = get_spec(list_of_specs[1])
@@ -203,40 +202,9 @@ for page in pages:
         driver.close()
         driver.switch_to.window(driver.window_handles[0])
 
-    cookies_accepted = False
+
     # once all the products in the page are scraped, go to the next page
-    try:
-        if not cookies_accepted:
-            try:
-                driver.find_element(
-                    By.CSS_SELECTOR, "button[data-fs-cookies-modal-button='true']"
-                ).click()
-                cookies_accepted = True
-            except:
-                pass
-        next_page = driver.find_element(
-            By.XPATH, "//button[@aria-label='Próxima Pagina']"
-        )
-        next_page.click()
-    except Exception as e:
-        # TODO: handle the case when there are no more pages available
-        # this is a temporary solution, for a pop-up that appears in the page.  
-        try:
-            pop_up = driver.find_element(By.XPATH, "//div[@id='wps-overlay']")
-
-            # Perform a click action outside the pop-up to close it
-            action = ActionChains(driver)
-            action.move_to_element_with_offset(pop_up, -10, -10).click().perform()
-
-            next_page = WebDriverWait(driver, 5).until(
-                EC.presence_of_element_located(
-                    (By.XPATH, "//button[contains(@aria-label, 'Próxima Pagina')]")
-                )
-            )
-            next_page.click()
-        except Exception as e:
-            logging.info('Pop-ups break the code!')
-
+    if not go_next_page(driver):
         break
 
 driver.quit()
