@@ -29,8 +29,6 @@ opts = Options()
 opts.add_argument(os.getenv('USER_AGENT'))
 opts.add_argument("--headless")
 opts.add_argument("--no-sandbox")
-opts.add_argument("--window-size=1920,1080")
-opts.add_argument('log-level=3')
 
 driver = webdriver.Firefox(
     service=Service(GeckoDriverManager().install()),
@@ -47,14 +45,16 @@ def get_specs(spec:str):
     Returns:
         str: The specifications of the given feature.
     """
-    a ="//div[@class='new-container__table__classifications']"
-    b = "//div[@class='new-container__table__classifications___type__item"
-    c = f"_feature' and contains(text(), '{spec}')]"
-    d = "/following-sibling::div"
-    spec = driver.find_element(
-        By.XPATH, f"{a}{b}{c}{d}"
-    ).text
-    return spec
+    try: 
+        a = f"//div[contains(@class,'type__item')]//div[contains(@class,'feature') and contains(., '{spec}')]/following-sibling::div[1]"
+        specification = driver.find_element(
+            By.XPATH, a
+        ).text
+        return specification
+    except Exception as e:
+        logging.error(f"Error getting specs '{spec}': {e}")
+        pass
+        return None
 
 # seed
 driver.get('https://www.alkosto.com/electrodomesticos/grandes-electrodomesticos/refrigeracion/c/BI_0610_ALKOS')
@@ -71,7 +71,9 @@ except Exception as e:
     driver.quit()
     sys.exit()
 
-visited_links = [0]
+visited_links =  gf.get_visited_links("Alkosto")
+
+logging.info(f"already visited links: {len(visited_links)}")
 
 for i in range(5):    
     xpath = "//button[contains(@class,'ais-InfiniteHits-loadMore')]"
@@ -97,17 +99,26 @@ for i in range(5):
     )
 
     children_elements = [
-        item for item in children_elements if item not in visited_links
+        item for item in children_elements 
     ]
 
-    visited_links += children_elements
-
+    list_of_links_to_visit = []
     for child in children_elements:
-        # get the product name
         product_link = child.find_element(
             By.XPATH, ".//a[@href]"
         ).get_attribute('href')
-        logging.info(product_link)
+        list_of_links_to_visit.append(product_link)
+    
+    # Convert to sets
+    links_to_visit_set = set(list_of_links_to_visit)
+    visited_links_set = set(visited_links)
+
+    # Remove visited
+    filtered_links = list(links_to_visit_set - visited_links_set)
+
+
+    for link in filtered_links:
+        # get the product name
 
         # open a new tab with the product link
         logging.info(f"Opening product link: {product_link}")
@@ -116,7 +127,7 @@ for i in range(5):
         # switch to the new tab
         driver.switch_to.window(driver.window_handles[-1])
         gf.scroll_smooth(driver, 1, 5, initial_scroll=1200)
-        sleep(random.uniform(5, 10))
+        sleep(random.uniform(10, 20))
 
         # get info
         product_link = driver.current_url

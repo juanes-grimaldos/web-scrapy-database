@@ -28,9 +28,6 @@ logging.basicConfig(
 opts = Options()
 opts.add_argument(os.getenv('USER_AGENT'))
 opts.add_argument("--headless")
-opts.add_argument("--width=1920")
-opts.add_argument("--height=1080")
-opts.add_argument("--log-level=3")
 
 driver = webdriver.Firefox(
     service = Service(GeckoDriverManager().install()), 
@@ -70,24 +67,41 @@ for page in pages:
     xpath = "//div[@id='testId-searchResults-products']/div"
     # get all elements
     products = driver.find_elements(By.XPATH, xpath)
-
+    list_of_links_to_visit = []
     for product in products:
+        link = product.find_element(By.XPATH, "./a").get_attribute("href")
+        list_of_links_to_visit.append(link)
+
+    visited_links = gf.get_visited_links("Falabella")
+    # Convert to sets
+    links_to_visit_set = set(list_of_links_to_visit)
+    visited_links_set = set(visited_links)
+
+    # Remove visited
+    filtered_links = list(links_to_visit_set - visited_links_set)
+
+
+    for link in filtered_links:
 
         # get the link and open it in a new tab
-        link = product.find_element(By.XPATH, "./a").get_attribute("href")
         logging.info(f"Opening product link: {link}")
         driver.execute_script("window.open(arguments[0]);", link)
         driver.switch_to.window(driver.window_handles[-1])
 
-        # get to the specifications
-        path = "//button[@id='swatch-collapsed-id']"
-        element = WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.XPATH, path))
-        )
-        element.location_once_scrolled_into_view
-        element.click()
+
+        path = "//button[contains(normalize-space(), 'Mostrar')]"
+
+        buttons = driver.find_elements(By.XPATH, path)
+
+        for btn in buttons:
+            try:
+                driver.execute_script("arguments[0].scrollIntoView(true);", btn)
+                btn.click()
+            except:
+                pass
 
         # get information
+        sleep(5)
         title = driver.find_element(
             By.XPATH, "//h1[contains(@class, 'product-name')]"
         ).text
@@ -103,6 +117,17 @@ for page in pages:
             ).text
 
         # get the specifications
+        driver.find_element(
+            By.XPATH,
+            "//button[.//div[contains(text(), 'Especificaciones')]]"
+        ).click()
+
+        
+        driver.find_element(
+            By.XPATH,
+            "//button[.//div[contains(., 'Especificaciones')]] /following-sibling::div //button[contains(@class, 'accordion__show-more-btn')]"
+        ).click()
+
         Color = get_specs("Color")
         depth = get_specs("Profundidad")
         width = get_specs("Ancho")

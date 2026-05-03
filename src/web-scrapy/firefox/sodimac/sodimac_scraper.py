@@ -6,6 +6,7 @@ from webdriver_manager.firefox import GeckoDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from data_bases.data_creation import DataCreation
+from utils.functions import GeneralFunctions as gf
 import logging
 from time import sleep
 import random
@@ -21,8 +22,6 @@ logging.basicConfig(
 )
 
 opts = Options()
-opts.add_argument("--window-size=1920,1080")
-opts.add_argument("--log-level=3")
 opts.add_argument("--headless")
 opts.add_argument(os.getenv('USER_AGENT'))
 
@@ -77,10 +76,22 @@ for page in pages:
     products = nav.find_elements(
         By.XPATH, "//div[@data-key]//a[@id='title-pdp-link']"
     )
+    links = []
+    for p in products:
+        link = p.get_attribute('href')
+        links.append(link)
+    visited_links = gf.get_visited_links('sodimac')
 
-    for product in products:
+    # Convert to sets
+    links_to_visit_set = set(links)
+    visited_links_set = set(visited_links)
+
+    # Remove visited
+    filtered_links = list(links_to_visit_set - visited_links_set)
+    
+
+    for link in filtered_links:
         # open a new tab with the product link
-        link = product.get_attribute('href')
         driver.execute_script("window.open(arguments[0]);", link)
         driver.switch_to.window(driver.window_handles[-1])
         logging.info(f"Opening product {link}")
@@ -102,8 +113,9 @@ for page in pages:
         width = get_spects('Alto')
         height = get_spects('Ancho')
         depth = get_spects('Fondo')
-        capacity = get_spects('Capacidad bruta')
+        capacity = get_spects('Capacidad')
         energy = get_spects('Consumo energético')
+        color = get_spects('Color')
 
         product_info_db = {
             'link': driver.current_url,
@@ -116,6 +128,7 @@ for page in pages:
             'size': f"{width} x {height} x {depth}",
             'storage': capacity,
             'energy': energy,
+            'color': color,
             'date': pd.to_datetime('today').date()
         }
         # store the data in a json file

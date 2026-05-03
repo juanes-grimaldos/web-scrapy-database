@@ -14,6 +14,9 @@ import pandas as pd
 import logging
 import os
 from data_bases.data_creation import DataCreation
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 dc = DataCreation()
 
@@ -31,14 +34,13 @@ logging.basicConfig(
 opts = Options()
 opts.add_argument(os.getenv('USER_AGENT'))
 opts.add_argument("--headless")
-opts.add_argument("--no-sandbox")
-opts.add_argument('log-level=3')
+
 
 driver = webdriver.Chrome(
     service = Service(GeckoDriverManager().install()), 
     options = opts
 )
-
+wait = WebDriverWait(driver, 15)
 # seed
 driver.get('https://www.exito.com/electrodomesticos/refrigeracion/neveras')
 
@@ -69,17 +71,26 @@ for page in pages:
     neveras = driver.find_elements(
         By.XPATH, "//ul[@data-fs-product-grid-type='electrodomesticos']/*"
     ) # list of products
-    for nevera in neveras:
-        sleep(random.uniform(5, 10))
-        nevera_link = nevera.find_element(
-            By.XPATH, ".//h3/a[@data-testid='product-link']"
+    list_of_links_to_visit = []
+    for nev in neveras:
+        nevera_link = nev.find_element(
+            By.XPATH, ".//a[@data-testid='product-link']"
         )
-        
-        # open a new tab with the product link
         link = nevera_link.get_attribute("href")
+        list_of_links_to_visit.append(link)
+    
+    visited_links = gf.get_visited_links("Exito")
+    # Convert to sets
+    links_to_visit_set = set(list_of_links_to_visit)
+    visited_links_set = set(visited_links)
+
+    # Remove visited
+    filtered_links = list(links_to_visit_set - visited_links_set)
+
+    
+
+    for link in filtered_links:
         driver.execute_script("window.open(arguments[0]);", link)
-
-
         # switch to the new tab
         driver.switch_to.window(driver.window_handles[-1])
         gf.scroll_smooth(driver, 1, 5, initial_scroll=600)
@@ -108,17 +119,22 @@ for page in pages:
 
         # get info
         product_link = driver.current_url
+        sleep(10)
         product_name = driver.find_element(
             By.XPATH, "//h1[contains(@class, 'product-title')]"
         ).text
-
         product_price = driver.find_element(
             By.XPATH, "//p[contains(@class, 'ProductPrice')]"
         ).text
-        product_warranty = driver.find_element(
-            By.XPATH, "//p[@data-fs-product-"
-            "aditional-info-garantia__txt='true']"
-        ).text
+        try:
+            product_warranty = driver.find_element(
+                By.XPATH, "//p[@data-fs-product-"
+                "aditional-info-garantia__txt='true']"
+            ).text
+        except Exception as e:
+            logging.info(f'error on getting warranty, maybe it is not available: {e}')
+            product_warranty = 'No warranty'
+
         # get list of specs
         list_of_specs = [
             "Ancho", "Alto", "Profundidad", "Peso", "Capacidad", "Consumo", 
@@ -129,18 +145,30 @@ for page in pages:
             Get the value of a specific spec from the product page
             Exito Only
             '''
-            init_text = "//p[@data-fs-title-specification="
-            sec_text = "'true' and contains(text(),"
-            final_text = ")]/following-sibling::p"
             try:
                 return driver.find_element(
-                    By.XPATH, 
-                    f"{init_text}{sec_text}'{spec_name}'{final_text}"
+                    By.XPATH,
+                    f"//h2[@data-fs-title-specification='true' and contains(normalize-space(), '{spec_name}')]/following-sibling::h3[1]"
                 ).text
             except Exception:
                 return None
         
         # get specs and store them in a dictionary
+
+        try:
+            button = driver.find_element(
+                By.XPATH,
+                "//button[@data-fs-cookies-modal-button='true']"
+            )
+            button.click()
+        except:
+            pass
+        sleep(10)
+        driver.find_element(
+            By.XPATH,
+            "//div[contains(@class, 'product-specification')]//div[contains(@class, 'more-link')]"
+        ).click()
+
         ancho = get_spec(list_of_specs[0])
         alto = get_spec(list_of_specs[1])
         profundidad = get_spec(list_of_specs[2])
@@ -174,14 +202,20 @@ for page in pages:
         # close the tab and switch to the main tab
         driver.close()
         driver.switch_to.window(driver.window_handles[0])
-    
+
+    cookies_accepted = False
     # once all the products in the page are scraped, go to the next page
     try:
-        # click on the next page button
-        next_page = WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located(
-                (By.XPATH, "//button[contains(@aria-label, 'Próxima Pagina')]")
-            )
+        if not cookies_accepted:
+            try:
+                driver.find_element(
+                    By.CSS_SELECTOR, "button[data-fs-cookies-modal-button='true']"
+                ).click()
+                cookies_accepted = True
+            except:
+                pass
+        next_page = driver.find_element(
+            By.XPATH, "//button[@aria-label='Próxima Pagina']"
         )
         next_page.click()
     except Exception as e:
