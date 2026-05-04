@@ -12,15 +12,35 @@ st.set_page_config(
     page_icon="🧊", layout="wide"
 )
 
+password = os.getenv("POSTGRES_PASSWORD")
+port = os.getenv("POSTGRES_PORT", "5432")
+db = os.getenv("POSTGRES_DB")
+server = os.getenv("POSTGRES_SERVER", "localhost")
+user = os.getenv("POSTGRES_USER", "postgres")
+
+
 @st.cache_data(ttl=600)
 def load_data():
     try:
-        conn = psycopg2.connect(
-            host=os.environ.get("POSTGRES_SERVER", "localhost"),
-            database=os.environ.get("POSTGRES_DB", "your_db"),
-            user=os.environ.get("DB_USER", "postgres"),
-            password=os.environ.get("POSTGRES_PASSWORD", "your_password")
-        )
+        if os.environ.get("POSTGRES_SERVER", "localhost") != 'localhost':
+            if server == 'localhost':
+                conn = psycopg2.connect(
+                    host=server,
+                    database=db,
+                    user=user,
+                    password=password,
+                    port=port
+                )
+            else:
+                conn = psycopg2.connect(
+                    host=server,
+                    database=db,
+                    user=user,
+                    password=password,
+                    port=port,
+                    sslmode="require"
+                )
+        
         df = pd.read_sql("SELECT * FROM fridges_clean", conn)
         conn.close()
         return df

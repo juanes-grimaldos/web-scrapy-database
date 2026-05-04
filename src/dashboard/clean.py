@@ -1,12 +1,30 @@
 import psycopg2
 import os
 
-conn = psycopg2.connect(
-    host=os.environ.get("POSTGRES_SERVER", "localhost"),
-    database=os.environ.get("POSTGRES_DB", "tu_db"),
-    user=os.environ.get("DB_USER", "postgres"),
-    password=os.environ.get("POSTGRES_PASSWORD", "tu_password")
-)
+
+password = os.getenv("POSTGRES_PASSWORD")
+port = os.getenv("POSTGRES_PORT", "5432")
+db = os.getenv("POSTGRES_DB")
+server = os.getenv("POSTGRES_SERVER", "localhost")
+user = os.getenv("POSTGRES_USER", "postgres")
+
+if server == 'localhost':
+    conn = psycopg2.connect(
+        host=server,
+        database=db,
+        user=user,
+        password=password,
+        port=port
+    )
+else:
+    conn = psycopg2.connect(
+        host=server,
+        database=db,
+        user=user,
+        password=password,
+        port=port,
+        sslmode="require"
+    )
 
 cur = conn.cursor()
 
