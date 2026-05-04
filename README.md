@@ -1,136 +1,217 @@
-# Web Scraping Project for Exito, Falabella, Alkosto, and Sodimac
+# 🧊 Colombia Fridges Price Analyzer
 
-## Summary
+> A data pipeline that scrapes refrigerator listings from major Colombian e-commerce platforms, stores them in a cloud PostgreSQL database, and exposes a Streamlit dashboard for price intelligence and market analysis.
 
-This project automates the process of web scraping fridges data from major e-commerce platforms [Exito](https://www.exito.com/electrodomesticos/refrigeracion/neveras), [Falabella](https://www.falabella.com.co/falabella-co/category/CATG32130/Refrigeracion?mkid=HB_1_REF_G14_N2_1081&page=1), [Alkosto](https://www.alkosto.com/electrodomesticos/grandes-electrodomesticos/refrigeracion/c/BI_0610_ALKOS), and [Sodimac](https://www.homecenter.com.co/homecenter-co/category/cat10850/neveras-y-nevecones/?currentpage=1) using [Selenium](https://www.selenium.dev/) and stores the scraped data in a [PostgreSQL](https://www.postgresql.org/) database. The data is visualized by [Power Bi](https://www.microsoft.com/en-us/power-platform/products/power-bi). Final Dashboard is available to consult [here](https://app.powerbi.com/view?r=eyJrIjoiNjNhYTBhOTktMDE0YS00Yzg3LTg1ZDctN2JkZjIxNzJiYmE4IiwidCI6ImQ2NDZkM2E4LTdiMTUtNGI1My05ZDkyLTk4MTVmZDYyNzAyYyIsImMiOjR9) or in the .pbix file. The project is developed in [Python](https://www.python.org/) and aims to streamline data collection for market analysis and research.
+**Live Dashboard → [colombia-fridges-price-analyzer.onrender.com](https://colombia-fridges-price-analyzer.onrender.com/)**
 
-<div class="center-content">
-    <a href="https://www.loom.com/share/86dcee6e874f407a9cec5fb7744b699b">
-        <p>Web Scraping Project by Juanes Grimaldos - Watch Video</p>
-    </a>
-    <a href="https://www.loom.com/share/86dcee6e874f407a9cec5fb7744b699b">
-        <img class="center-img" style="max-width: 300px;" src="https://cdn.loom.com/sessions/thumbnails/86dcee6e874f407a9cec5fb7744b699b-with-play.gif">
-    </a>
-</div>
+---
 
+## 📌 Business Motivation
 
+Buying a refrigerator in Colombia means navigating four major retailers — each with its own pricing strategy, seller network, and product catalog. This project answers the practical question: **where should I buy, and is the price fair?**
 
-## Table of Contents
+By automating data collection across Éxito, Falabella, Alkosto, and Sodimac, the dashboard surfaces:
 
-- [Project Overview](#project-overview)
-- [Setup and Installation](#setup-and-installation)
-  - [Prerequisites](#prerequisites)
-  - [Virtual Environment](#virtual-environment)
-  - [Installing Dependencies](#installing-dependencies)
-  - [Enviromental Variables](#enviromental-variables)
-- [Usage](#usage)
-  - [Running the Scripts](#running-the-scripts)
-  - [Execution Time](#execution-time)
-- [Technical Details](#technical-details)
-  - [Browser Compatibility](#browser-compatibility)
-  - [Expected Output](#expected-output)
-- [Viewing the Dashboard](#viewing-the-dashboard)
+- Average and minimum prices per retailer
+- Price distribution across storage capacity, energy rating, and color
+- Temporal price trends
+- Cross-store comparisons for the same or equivalent products
 
+---
 
-## Project Overview
+## 🏗️ Architecture
 
-This project involves developing a PostgreSQL database by web scraping product data from the following e-commerce websites:
-- **Exito**
-- **Falabella**
-- **Alkosto**
-- **Sodimac**
-
-The data is collected using Selenium for automation and then processed and stored in a PostgreSQL database. This facilitates market analysis and data-driven decision-making.
-
-## Setup and Installation
-
-### Prerequisites
-
-- Python 3.11.2
-- PostgreSQL 16.3, compiled by Visual C++ build 1938, 64-bit
-- Google Chrome or Mozilla Firefox
-
-### Virtual Environment
-
-It's recommended to use a virtual environment to manage dependencies. You can create and activate a virtual environment as follows:
-
-```bash
-# Create a virtual environment
-python -m venv venv
-
-# Activate the virtual environment (Windows)
-.\venv\Scripts\activate
-
-# Activate the virtual environment (macOS/Linux)
-source venv/bin/activate
+```
+E-commerce sites
+  (Éxito · Falabella · Alkosto · Sodimac)
+        │
+        │  Selenium scrapers (Python)
+        ▼
+  Data Processing & Cleaning
+        │
+        │  psycopg2 / SQLAlchemy
+        ▼
+  Supabase (PostgreSQL on AWS)
+        │
+        │  Streamlit queries
+        ▼
+  Dashboard  ──►  Render (cloud deployment)
 ```
 
+---
 
-### Installing Dependencies
+## 🗄️ Database Schema
 
-Install the required packages using the requirements.txt file:
+Two tables are linked by a product URL (`fridge_link` → `link`):
+
+```
+specs                          fridges
+─────────────────────          ──────────────────────
+id          int4  (PK)         link        varchar (PK)
+fridge_link varchar (FK) ───►  product     varchar
+storage     varchar            price       int4
+size        varchar            seller      varchar
+energy      varchar
+color       varchar
+date        date
+```
+
+- **`fridges`** — core listing: product name, price, seller, and a unique URL identifier.
+- **`specs`** — technical attributes scraped from each product page, linked back to the listing.
+
+Database is hosted on **Supabase** (PostgreSQL 15, connection pooling via PgBouncer on port 6543).
+
+---
+
+## 🕷️ Scrapers
+
+One script per retailer, all built with **Selenium** and a configurable `USER_AGENT`:
+
+| Script | Target site |
+|--------|-------------|
+| `src/scrapers/exito_scraper.py` | [exito.com](https://www.exito.com/electrodomesticos/refrigeracion/neveras) |
+| `src/scrapers/falabella_scraper.py` | [falabella.com.co](https://www.falabella.com.co/falabella-co/category/CATG32130/Refrigeracion) |
+| `src/scrapers/alkosto_scraper.py` | [alkosto.com](https://www.alkosto.com/electrodomesticos/grandes-electrodomesticos/refrigeracion/c/BI_0610_ALKOS) |
+| `src/scrapers/sodimac_scraper.py` | [homecenter.com.co](https://www.homecenter.com.co/homecenter-co/category/cat10850/neveras-y-nevecones/) |
+
+Each scraper collects: product name, price, seller, storage capacity, energy rating, color, dimensions, and product URL. A full run across all four stores takes **15 minutes to 1 hour** depending on network speed and number of listings.
+
+---
+
+## ⚙️ Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Language | Python 3.11 |
+| Scraping | Selenium |
+| Database | PostgreSQL (Supabase) |
+| Dashboard | Streamlit |
+| Deployment | Render |
+
+---
+
+## 🚀 Getting Started
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/juanes-grimaldos/web-scrapy-database.git
+cd web-scrapy-database
+```
+
+### 2. Create a virtual environment
+
+```bash
+python -m venv venv
+
+# macOS / Linux
+source venv/bin/activate
+
+# Windows
+.\venv\Scripts\activate
+```
+
+### 3. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
+### 4. Configure environment variables
 
-### Enviromental Variables
+Create a `.env` file in the project root (or export variables in your shell):
 
-In order to run the codes, several variables need to be set in order to run
-- PYTHONPATH (use src has working directory)
-- POSTGRES_PASSWORD
-- POSTGRES_PORT
-- POSTGRES_DB
-- POSTGRES_SERVER
-- USER_AGENT
+```env
+PYTHONPATH=src
 
-## Usage
+# Supabase / PostgreSQL connection
+POSTGRES_USER=postgres.cjdznvjsoxkkkkozomal
+POSTGRES_PASSWORD=your_supabase_password
+POSTGRES_PORT=6543
+POSTGRES_DB=postgres
+POSTGRES_SERVER=aws-0-us-west-2.pooler.supabase.com
 
-### Running the Scripts
+# Browser identity for Selenium
+USER_AGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36
 
-You can run the scraping scripts using either Chrome or Firefox. Ensure that the appropriate WebDriver (e.g., chromedriver or geckodriver) is installed and added to your PATH.
-
-Example command to run a script:
-
-```bash
-python alkosto_scraper.py
+# Debugger timeout (optional, useful for long scraping sessions)
+PYDEVD_INTERRUPT_THREAD_TIMEOUT=120
 ```
 
-### Execution Time
+> **Note:** `POSTGRES_PORT=6543` uses Supabase's transaction-mode connection pooler (PgBouncer). Use port `5432` only for direct connections.
 
-  Full run: The script may take between 15 minutes to 1 hour to complete.
+---
+
+## 🕷️ Running the Scrapers
+
+Run each script individually:
+
+```bash
+python src/scrapers/exito_scraper.py
+python src/scrapers/falabella_scraper.py
+python src/scrapers/alkosto_scraper.py
+python src/scrapers/sodimac_scraper.py
+```
+![scrapper Demo](src/readme/gif1_exito.gif)
+![local Database Demo](src/readme/gif1_db.gif)
+![Supabase  Demo](src/readme/gif1_server.gif)
 
 
-  Quick run: Scraping about 50 links per store/script takes approximately 5 to 10 minutes.
+The scrapers require **Google Chrome** and a matching `chromedriver` on your `PATH`. Download the driver matching your Chrome version from [chromedriver.chromium.org](https://chromedriver.chromium.org/downloads).
+
+---
+
+## 📊 Running the Dashboard Locally
+
+```bash
+streamlit run src/dashboard/app.py
+```
+![viewer demo](src/readme/gif1_project.gif)
 
 
-## Technical Details
-### Browser Compatibility
+The app will open at `http://localhost:8501`.
 
-The scraping scripts are compatible with both Google Chrome and Mozilla Firefox. Make sure you have the corresponding WebDriver:
+---
 
-    Chrome: Download Chromedriver
-    Firefox: Download Geckodriver
+## ☁️ Deployment on Render
 
-### Expected Output
+The dashboard is deployed as a **Render Web Service** running Streamlit. To deploy your own instance:
 
-The scripts will scrape product details such as:
+1. Push your code to GitHub.
+2. Create a new **Web Service** on [render.com](https://render.com) pointing to your repo.
+3. Set the **Start Command**:
+   ```
+   streamlit run src/dashboard/app.py --server.port $PORT --server.address 0.0.0.0
+   ```
+4. Add all environment variables from the `.env` section above in the Render dashboard under **Environment**.
 
-    Product name
-    Price
-    space (liters)
-    energy consumption
-    Product URL
+---
 
-The following entity diagram shows the expected output of information scraped from websites:
+## 📁 Project Structure
 
-![description of the databases to create](src/data_bases/model_diagam.drawio.png "Entity Relation Diagram")
+```
+web-scrapy-database/
+├── src/
+│   ├── web-scrapy/
+│   │   ├── exito_scraper.py
+│   │   ├── falabella_scraper.py
+│   │   ├── alkosto_scraper.py
+│   │   └── sodimac_scraper.py
+│   ├── dashboard/
+│   │   └── app.py
+│   └── data_bases/
+│       └── model_diagram.drawio.png
+├── .streamlit/
+│   └── config.toml
+├── .devcontainer/
+├── requirements.txt
+├── .gitignore
+├── LICENSE
+└── README.md
+```
 
-The data is then saved into the PostgreSQL database configured in your setup.
-## Viewing the Dashboard
+---
 
-To view the interactive project dashboard:
+## 📄 License
 
-You can view the interactive dashboard [here](https://app.powerbi.com/view?r=eyJrIjoiNjNhYTBhOTktMDE0YS00Yzg3LTg1ZDctN2JkZjIxNzJiYmE4IiwidCI6ImQ2NDZkM2E4LTdiMTUtNGI1My05ZDkyLTk4MTVmZDYyNzAyYyIsImMiOjR9).
-    
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
