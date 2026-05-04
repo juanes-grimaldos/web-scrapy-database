@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import psycopg2
+from sqlalchemy import create_engine
 import os
 from dashboard.pricing_analysis import fair_price_range, price_recommendation
 
@@ -19,30 +19,16 @@ server = os.getenv("POSTGRES_SERVER", "localhost")
 user = os.getenv("POSTGRES_USER", "postgres")
 
 
+@st.cache_resource
+def get_engine():
+    database_url = f"postgresql+psycopg2://{user}:{password}@{server}:{port}/{db}"
+    return create_engine(database_url, pool_pre_ping=True)
+
 @st.cache_data(ttl=600)
 def load_data():
     try:
-        if os.environ.get("POSTGRES_SERVER", "localhost") != 'localhost':
-            if server == 'localhost':
-                conn = psycopg2.connect(
-                    host=server,
-                    database=db,
-                    user=user,
-                    password=password,
-                    port=port
-                )
-            else:
-                conn = psycopg2.connect(
-                    host=server,
-                    database=db,
-                    user=user,
-                    password=password,
-                    port=port,
-                    sslmode="require"
-                )
-        
-        df = pd.read_sql("SELECT * FROM fridges_clean", conn)
-        conn.close()
+        engine = get_engine()
+        df = pd.read_sql("SELECT * FROM fridges_clean", engine)
         return df
     except Exception as e:
         st.error(f"Database error: {e}")
