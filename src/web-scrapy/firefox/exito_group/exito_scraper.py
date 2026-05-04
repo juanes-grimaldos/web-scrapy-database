@@ -33,7 +33,7 @@ logging.basicConfig(
 
 opts = Options()
 opts.add_argument(os.getenv('USER_AGENT'))
-#opts.add_argument("--headless")
+opts.add_argument("--headless")
 
 
 driver = webdriver.Chrome(
